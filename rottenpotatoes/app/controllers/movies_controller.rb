@@ -1,7 +1,7 @@
 class MoviesController < ApplicationController
   
   def movie_params
-    params.require(:movie).permit(:title, :rating, :description, :release_date)
+    params.require(:movie).permit(:title, :rating, :description, :release_date, :director)
   end
 
   def show
@@ -12,6 +12,10 @@ class MoviesController < ApplicationController
 
   def index
     sort = params[:sort] || session[:sort]
+    
+    session[:director] = params[:director] || '*'
+    @display = (session[:director] == '*')? 'All Movies' : "Similar Movies page for #{Movie.find(session[:director]).title}"
+    
     case sort
     when 'title'
       ordering,@title_header = {:title => :asc}, 'hilite'
@@ -25,12 +29,20 @@ class MoviesController < ApplicationController
       @selected_ratings = Hash[@all_ratings.map {|rating| [rating, rating]}]
     end
     
-    if params[:sort] != session[:sort] or params[:ratings] != session[:ratings]
+    if params[:sort] != session[:sort] or params[:ratings] != session[:ratings] or params[:director] != session[:director]
       session[:sort] = sort
       session[:ratings] = @selected_ratings
-      redirect_to :sort => sort, :ratings => @selected_ratings and return
+      redirect_to :sort => sort, :ratings => @selected_ratings, :director => session[:director] and return
     end
-    @movies = Movie.where(rating: @selected_ratings.keys).order(ordering)
+    
+    if (session[:director] == '*') then 
+      @movies = Movie.where(rating: @selected_ratings.keys).order(ordering)
+    else 
+      @movies = Movie.similar_Director(session[:director])
+      if @movies == [] then 
+        flash[:notice] = "'#{Movie.find(session[:director]).title}' has no director info" 
+      end
+    end
   end
 
   def new
