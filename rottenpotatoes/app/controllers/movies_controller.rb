@@ -13,8 +13,8 @@ class MoviesController < ApplicationController
   def index
     sort = params[:sort] || session[:sort]
     
-    session[:director] = params[:director] || '*'
-    @display = (session[:director] == '*')? 'All Movies' : "Similar Movies page for #{Movie.find(session[:director]).title}"
+    #@display = (session[:director] == '*')? 'All Movies' : "Similar Movies page for #{Movie.find(session[:director]).title}"
+    @display = 'All Movies'
     
     case sort
     when 'title'
@@ -35,18 +35,20 @@ class MoviesController < ApplicationController
       redirect_to :sort => sort, :ratings => @selected_ratings, :director => session[:director] and return
     end
     
-    if (session[:director] == '*') then 
-      @movies = Movie.where(rating: @selected_ratings.keys).order(ordering)
-    else 
-      @movies = Movie.similar_Director(session[:director])
-      if @movies == [] then 
-        flash[:notice] = "'#{Movie.find(session[:director]).title}' has no director info" 
-      end
-    end
+    @movies = Movie.where(rating: @selected_ratings.keys).order(ordering)
+
   end
 
   def new
     # default: render 'new' template
+  end
+  
+  def director
+      @display =  "Similar Movies page for #{Movie.find(params[:id]).title}"
+      @movies = Movie.similar_Director(params[:id])
+      if @movies == [] then 
+        flash[:notice] = "'#{Movie.find(params[:id]).title}' has no director info" 
+      end    
   end
 
   def create

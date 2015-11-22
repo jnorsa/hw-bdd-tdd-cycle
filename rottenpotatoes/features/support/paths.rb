@@ -27,7 +27,8 @@ module NavigationHelpers
       "/movies/#{movie.id}"
       
     when /^the Similar Movies page for "(.*)"/
-      '/movies'
+    movie = Movie.find_by_title($1)
+      "/movies/#{movie.id}/director"
       
     # Add more mappings here.
     # Here is an example that pulls values out of the Regexp:
